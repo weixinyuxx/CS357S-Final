@@ -52,7 +52,9 @@ def racket_run(tmp_path, reg1, reg2):
 
 def r2r(expr, type, exclude, reg1, reg2, tmp_path="tmp.rkt"):
     """Translate from racket to racket code."""
-    if render(expr, type, exclude, reg1, reg2,tmp_path) == None:
+    if reg1 == reg2:
+        reg1 = "%tmp_alter"
+    if render(expr, type, exclude, tmp_path, reg1, reg2) == None:
         return None
     result = racket_run(tmp_path, reg1, reg2)
     if result == None:
