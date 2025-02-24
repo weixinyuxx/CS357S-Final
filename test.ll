@@ -14,13 +14,6 @@ define i32 @add_two(i32 %x, i32 %y, i64 %reg1, i64 %reg2) {
   %dest6 = and i64 %reg2, %reg2
   %dest7 = or i64 %reg2, %reg2
   %dest8 = xor i64 %reg2, %reg2
-
-  %dest9 = icmp eq i64 %reg2, %reg2
-  %dest10 = icmp ne i64 %reg2, %reg2
-  %dest11 = icmp slt i64 %reg2, %reg2
-  %dest12 = icmp sle i64 %reg2, %reg2
-  %dest13 = icmp sgt i64 %reg2, %reg2
-  %dest14 = icmp sge i64 %reg2, %reg2
   
   ret i32 %sum
 
