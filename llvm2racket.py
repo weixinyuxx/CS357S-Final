@@ -4,6 +4,7 @@ import sys
 import time
 import random as rand
 from racket2racket import r2r
+from rkt2llvm import rkt2llvm, DestReg
 
 start_time_total = time.time()
 # Initialize the LLVM bindings
@@ -31,10 +32,6 @@ valid_opcodes = {'add':'bvadd', 'sub':'bvsub', 'mul':'bvmul',
                      'shl':'bvshl', 'lshr':'bvlshr', 'ashr':'bvashr',
                      'and':'bvand', 'or':'bvor', 'xor':'bvxor',
                      'icmp eq':'bveq', 'icmp ne':'bveq', 'icmp slt':'<', 'icmp sle':'<=', 'icmp sgt':'>', 'icmp sge':'>='} # ne is different
-
-def rkt2llvm(rkt_str):
-    # TODO: Implement racket to llvm conversion
-    return rkt_str
 
 
 # Contains all valid instructions from llvm code
@@ -92,6 +89,8 @@ sys.stdout.flush()
 
 alt_dest_reg = 0
 llvm_mod_code = llvm_ir_code
+dest_reg = DestReg()
+inst_types = ['i32', 'i64']
 
 print("Valid Instructions:")
 for inst in inst_list:
@@ -103,8 +102,19 @@ for inst in inst_list:
     old_res_reg = res_reg
     opcode = inst.opcode
     operands = inst.operands
-    op1 = str(operands.next()).split()[1]
-    op2 = str(operands.next()).split()[1]
+    # for op in operands:
+    #     print("op:", op)
+    operands = inst.operands
+    op1_list = str(operands.next()).split()
+    op1 = op1_list[0]
+    if op1 in inst_types:
+        op1 = op1_list[1]
+    op2_list = str(operands.next()).split()
+    op2 = op2_list[0]
+    if op2 in inst_types:
+        op2 = op2_list[1]
+    print("op1:", op1)
+    print("op2:", op2)
 
     # Add constants as (bvadd %reg1 (int 5))
     try:
@@ -112,7 +122,14 @@ for inst in inst_list:
         op2 = f"(int {op2})"
     except ValueError:
         pass
+
+    try:
+        op1_int = int(op1)
+        op1 = f"(int {op1})"
+    except ValueError:
+        pass
     
+    # TODO: replace with DestReg alt_reg call
     # Replace dest reg with alt dest reg
     alt_dest_reg_str = f"%dest{alt_dest_reg}"
     while alt_dest_reg_str in llvm_ir_code:
@@ -122,6 +139,8 @@ for inst in inst_list:
     alt_dest_reg += 1
 
     # Build racket instruction from llvm
+    # print("op1:", op1)
+    # print("op2:", op2)
     rkt_inst = f"({valid_opcodes[opcode]} {op1} {op2})"
     if inst.opcode == 'icmp ne':
         rkt_inst = f"(not ({rkt_inst}))"
@@ -145,6 +164,7 @@ for inst in inst_list:
     if not alt_rkt_code:
         print("No alternative found")
         alt_rkt_code = ""
+    alt_rkt_code = alt_rkt_code.strip()
 
     # # Read alternative racket code from temp file
     # alt_rkt_temp_file_path = 'alt_rkt_temp.txt'
@@ -152,17 +172,7 @@ for inst in inst_list:
     #     alt_rkt_code = alt_rkt_temp_file.read()
 
     # Convert alternate racket code to alterate llvm code
-    alt_llvm_code = rkt2llvm(alt_rkt_code)
-    if alt_rkt_code == "":
-        alt_llvm_code = inst_str.replace(old_res_reg, res_reg).strip()
-    else:
-        alt_llvm_code = f"{res_reg} = {alt_llvm_code}"
-    print("Alternate LLVM:", alt_llvm_code)
-
-    # Add to llvm -> alternate llvm mapping
-    alt_llvm_map[inst_str] = alt_llvm_code
     line = inst_str
-    alt_line = alt_llvm_code
     num_leading_spaces = 0
     for c in line:
         if c.isspace():
@@ -170,10 +180,31 @@ for inst in inst_list:
         else:
             break
     leading_spaces = num_leading_spaces * ' '
-    sdc_line = f"call void @sdc_check_{str(inst.type)}({str(inst.type)} {old_res_reg}, {str(inst.type)} {res_reg})"
-    print(f'Appending "{leading_spaces}{alt_line}" before "{line}"')
-    print(f'Appending "{leading_spaces}{sdc_line}" after "{line}"')
-    llvm_mod_code = llvm_mod_code.replace(line, f'{leading_spaces}{alt_line}\n{line}\n{leading_spaces}{sdc_line}')
+    alt_llvm_code = ""
+    if alt_rkt_code == "":
+        alt_llvm_code = leading_spaces + inst_str.replace(old_res_reg, res_reg).strip()
+    else:
+        print("alt_rkt_code:", alt_rkt_code)
+        print("type:", str(inst.type))
+        print("dest_reg:", dest_reg)
+        if not alt_rkt_code.startswith('(') or not alt_rkt_code.endswith(')'):
+            alt_dest_reg_str = alt_rkt_code
+        else:
+            alt_llvm_code_list, alt_dest_reg_str = rkt2llvm(alt_rkt_code, str(inst.type), dest_reg)
+            for alt_line in alt_llvm_code_list:
+                alt_llvm_code += leading_spaces + alt_line + "\n"
+            alt_llvm_code = alt_llvm_code.rstrip()
+
+    print("Alternate LLVM:", alt_llvm_code)
+
+    # Add to llvm -> alternate llvm mapping
+    alt_llvm_map[inst_str] = alt_llvm_code
+    alt_line = alt_llvm_code
+    
+    sdc_line = leading_spaces + f"call void @sdc_check_{str(inst.type)}({str(inst.type)} {old_res_reg}, {str(inst.type)} {alt_dest_reg_str})"
+    print(f'Appending "{alt_line}" before "{line}"')
+    print(f'Appending "{sdc_line}" after "{line}"')
+    llvm_mod_code = llvm_mod_code.replace(line, f'{alt_line}\n{line}\n{sdc_line}')
     end_time_inst = time.time()
     print(f"Instruction Time: {end_time_inst - start_time_inst} s")
     print("")
@@ -181,21 +212,6 @@ for inst in inst_list:
 
 print(alt_llvm_map)
 
-# TODO: Instead of random, generate new version with all substutions
-# Choose random llvm instruction to test and append alternate llvm instruction
-
-# for line, alt_line in alt_llvm_map.items():
-#     leading_spaces = 0
-#     for c in line:
-#         if c.isspace():
-#             leading_spaces += 1
-#         else:
-#             break
-#     replacement_line = leading_spaces * ' ' + alt_line
-#     print(f'Appending "{replacement_line}" before "{line}"')
-#     llvm_mod_code = llvm_mod_code.replace(line, f'{replacement_line}\n{line}')
-
-# TODO: add code to compare alternate register value with original destination register value
 # TODO: script to run and test alternate file
 
 sdc_check_code = '''
@@ -231,9 +247,23 @@ declare void @abort()
 llvm_mod_code += sdc_check_code
 
 # Create new llvm file with modified llvm code
-llvm_mod_file_path = 'test_mod.txt'
+llvm_mod_file_path = 'test_mod.ll'
 with open(llvm_mod_file_path, 'w') as llvm_mod_file:
     llvm_mod_file.write(llvm_mod_code)
+
+exe_file_path = 'test_mod_exe'
+try:
+    subprocess.run(["clang", llvm_mod_file_path, "-o", exe_file_path], check=True)
+    print(f"Clang Conversion Successful: {llvm_mod_file_path} -> {exe_file_path}")
+except subprocess.CalledProcessError as e:
+    print(f"***Error in Clang Conversion***")
+
+try:
+    result = subprocess.run([f"./{exe_file_path}"], check=True, capture_output=True)
+    print(f"Execution Successful: {exe_file_path}")
+    print(f"Output: {result}")
+except subprocess.CalledProcessError as e:
+    print(f"***Error in Execution***")
 
 end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
