@@ -51,7 +51,8 @@ def rkt2llvm_helper(rkt_str, iterator, type, dest_reg):
     dest = dest_reg.alt_dest()
     if opcode == "bv":
         val = int(first_dest[2:], 16)
-        inst = [f"{dest} = add {type} {val}, 0"]
+        inst = [f"{dest} = alloca {type}",
+                f"store {type} {val}, {type}* {dest}"]
     else:
         inst = (
             first_inst
