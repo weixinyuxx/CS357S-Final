@@ -52,8 +52,12 @@ def racket_run(tmp_path, reg1, reg2):
 
 def r2r(expr, type, exclude, reg1, reg2, tmp_path="tmp.rkt"):
     """Translate from racket to racket code."""
+    if reg1.startswith("("):
+        reg1 = "%tmp_alter1"
+    if reg2.startswith("("):
+        reg2 = "%tmp_alter2"
     if reg1 == reg2:
-        reg1 = "%tmp_alter"
+        reg1 = "%tmp_alter1"
     if render(expr, type, exclude, tmp_path, reg1, reg2) == None:
         return None
     result = racket_run(tmp_path, reg1, reg2)
@@ -61,5 +65,5 @@ def r2r(expr, type, exclude, reg1, reg2, tmp_path="tmp.rkt"):
         return None
     return result
 
-print(r2r("(bvadd %reg2 %reg2)", "i64", ["bvadd"], "%reg1", "%reg2"))
-
+# print(r2r("(bvadd %reg2 %reg2)", "i64", ["bvadd"], "%reg1", "%reg2"))
+# print(r2r("(bvshl %10 (int 1))", "i32", ["bvshl"], "%10", "(int 1)"))
