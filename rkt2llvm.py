@@ -48,11 +48,13 @@ def rkt2llvm_helper(rkt_str, iterator, type, dest_reg):
     # iterator points to the last closing parenthesis
     iterator += 1
     inst = []
-    dest = dest_reg.alt_dest()
+    dest = ""
     if opcode == "bv":
         val = int(first_dest[2:], 16)
-        inst = [f"{dest} = add {type} {val}, 0"]
+        inst = []
+        dest = str(val)
     else:
+        dest = dest_reg.alt_dest()
         inst = (
             first_inst
             + second_inst
