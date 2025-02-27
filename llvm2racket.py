@@ -202,7 +202,7 @@ for inst in inst_list:
     alt_llvm_map[inst_str] = alt_llvm_code
     alt_line = alt_llvm_code
     
-    sdc_line = leading_spaces + f"call void @sdc_check_{str(inst.type)}({str(inst.type)} {old_res_reg}, {str(inst.type)} {alt_dest_reg_str}, {str(inst.type)} {count})"
+    sdc_line = leading_spaces + f"call void @sdc_check_{str(inst.type)}({str(inst.type)} {old_res_reg}, {str(inst.type)} {alt_dest_reg_str}, i32 {count})"
     print(f'Appending "{alt_line}" before "{line}"')
     print(f'Appending "{sdc_line}" after "{line}"')
     llvm_mod_code = llvm_mod_code.replace(line, f'{alt_line}\n{line}\n{sdc_line}')
@@ -223,31 +223,27 @@ entry:
     br i1 %cmp, label %abort, label %done
 
 abort:
-    call void @print32(i32 %counter)
-    call void @abort()
+    call void @exit(i32 %counter)
     br label %done
 
 done:
     ret void
 }
 
-define void @sdc_check_i64(i64 %reg1, i64 %reg2, i64 %counter) {
+define void @sdc_check_i64(i64 %reg1, i64 %reg2, i32 %counter) {
 entry:
     %cmp = icmp ne i64 %reg1, %reg2
     br i1 %cmp, label %abort, label %done
 
 abort:
-    call void @print64(i64 %counter)
-    call void @abort()
+    call void @exit(i32 %counter)
     br label %done
 
 done:
     ret void
 }
 
-declare void @abort()
-declare void @print32(i32)
-declare void @print64(i64)
+declare void @exit(i32)
 '''
 llvm_mod_code += sdc_check_code
 
