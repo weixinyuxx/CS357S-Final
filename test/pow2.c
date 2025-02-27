@@ -3,8 +3,8 @@ int main() {
     int n = 5;
     int p = 8;
     for (int i = 0; i < p; i++) {
-        p = p << 1;
+        n = n << 1;
     }
-    printf("Result: %d\n", p);
+    print32(n);
     return 0;
 }
