@@ -63,6 +63,10 @@ def r2r(expr, type, exclude, reg1, reg2, tmp_path="tmp.rkt"):
     result = racket_run(tmp_path, reg1, reg2)
     if result == None:
         return None
+    if result.find("%tmp_alter1") != -1:
+        return None
+    if result.find("%tmp_alter2") != -1:
+        return None
     return result
 
 # print(r2r("(bvadd %reg2 %reg2)", "i64", ["bvadd"], "%reg1", "%reg2"))
