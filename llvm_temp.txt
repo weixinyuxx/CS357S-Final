@@ -1,0 +1,2 @@
+i64
+%dest23 = (bvxor %reg2 %reg2)

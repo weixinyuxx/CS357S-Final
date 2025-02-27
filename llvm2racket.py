@@ -40,13 +40,13 @@ inst_list = []
 alt_llvm_map = dict()
 
 c_file_path = 'pow2.c'
-llvm_file_path = 'test.ll'
+llvm_file_path = 'test_all.ll'
 
 # TODO: change to read in c file, call clang, and parse generated llvm file
-try:
-    subprocess.run(["clang", "-S", "-emit-llvm", c_file_path, "-o", llvm_file_path], check=True)
-except subprocess.CalledProcessError as e:
-    print(f"***Error in Clang conversion***")
+# try:
+#     subprocess.run(["clang", "-S", "-emit-llvm", c_file_path, "-o", llvm_file_path], check=True)
+# except subprocess.CalledProcessError as e:
+#     print(f"***Error in Clang conversion***")
 
 # Read in llvm code file
 with open(llvm_file_path, 'r') as llvm_file:
@@ -158,7 +158,7 @@ for inst in inst_list:
     print('Running Racket script...')
     sys.stdout.flush()
     # result = subprocess.run(['racket', 'binop_base.rkt'], capture_output=True, text=True)
-    print(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]])
+    print(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
     alt_rkt_code = r2r(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
     # print(alt_rkt_code)
     if not alt_rkt_code:
