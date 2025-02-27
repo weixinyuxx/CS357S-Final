@@ -39,14 +39,14 @@ inst_list = []
 # Mappings of llvm instruction to alternate llvm instruction
 alt_llvm_map = dict()
 
-c_file_path = 'test.c'
+c_file_path = 'pow2.c'
 llvm_file_path = 'test.ll'
 
 # TODO: change to read in c file, call clang, and parse generated llvm file
-# try:
-#     subprocess.run(["clang", "-S", "-emit-llvm", c_file_path, "-o", llvm_file_path], check=True)
-# except subprocess.CalledProcessError as e:
-#     print(f"***Error in Clang conversion***")
+try:
+    subprocess.run(["clang", "-S", "-emit-llvm", c_file_path, "-o", llvm_file_path], check=True)
+except subprocess.CalledProcessError as e:
+    print(f"***Error in Clang conversion***")
 
 # Read in llvm code file
 with open(llvm_file_path, 'r') as llvm_file:
@@ -259,9 +259,11 @@ except subprocess.CalledProcessError as e:
     print(f"***Error in Clang Conversion***")
 
 try:
-    result = subprocess.run([f"./{exe_file_path}"], check=True, capture_output=True)
+    # result = subprocess.run([f"./{exe_file_path}"], check=True, capture_output=True)
+    # print(f"Execution Successful: {exe_file_path}")
+    # print(f"Output: {result}")
+    subprocess.run([f"./{exe_file_path}"], check=True)
     print(f"Execution Successful: {exe_file_path}")
-    print(f"Output: {result}")
 except subprocess.CalledProcessError as e:
     print(f"***Error in Execution***")
 
