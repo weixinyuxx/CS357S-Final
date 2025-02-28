@@ -1,10 +1,10 @@
 #include <stdio.h>
 int main() {
-    int n = 5;
-    int p = 8;
+    int p = 4;
+    int result = 1;
     for (int i = 0; i < p; i++) {
-        n = n << 1;
+        result = result << 1;
     }
-    print32(n);
+    printf("Result: %d\n", result);
     return 0;
 }

@@ -2,7 +2,8 @@ import llvmlite.binding as llvm
 import subprocess
 import sys
 import time
-import random as rand
+import shutil
+import os
 from racket2racket import r2r
 from rkt2llvm import rkt2llvm, DestReg
 
@@ -33,16 +34,26 @@ valid_opcodes = {'add':'bvadd', 'sub':'bvsub', 'mul':'bvmul',
                      'and':'bvand', 'or':'bvor', 'xor':'bvxor',
                      'icmp eq':'bveq', 'icmp ne':'bveq', 'icmp slt':'<', 'icmp sle':'<=', 'icmp sgt':'>', 'icmp sge':'>='} # ne is different
 
-
 # Contains all valid instructions from llvm code
 inst_list = []
 # Mappings of llvm instruction to alternate llvm instruction
 alt_llvm_map = dict()
 
-c_file_path = 'pow2.c'
-llvm_file_path = 'test_all.ll'
+# Directory and file paths
+file_name = 'test_all'
+test_dir_path = 'test'
+temp_dir_path = 'temp'
+c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
+llvm_file_path = os.path.join(temp_dir_path, f"{file_name}.ll")
+llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
+exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
 
-# TODO: change to read in c file, call clang, and parse generated llvm file
+# Reset temp folder
+if os.path.exists(temp_dir_path):
+    shutil.rmtree(temp_dir_path)
+os.makedirs(temp_dir_path)
+
+# Convert c file to llvm file
 try:
     subprocess.run(["clang", "-S", "-emit-llvm", c_file_path, "-o", llvm_file_path], check=True)
 except subprocess.CalledProcessError as e:
@@ -248,25 +259,25 @@ declare void @exit(i32)
 llvm_mod_code += sdc_check_code
 
 # Create new llvm file with modified llvm code
-llvm_mod_file_path = 'test_mod.ll'
 with open(llvm_mod_file_path, 'w') as llvm_mod_file:
     llvm_mod_file.write(llvm_mod_code)
 
-exe_file_path = 'test_mod_exe'
+# Convert llvm file to executable
 try:
     subprocess.run(["clang", llvm_mod_file_path, "-o", exe_file_path], check=True)
     print(f"Clang Conversion Successful: {llvm_mod_file_path} -> {exe_file_path}")
 except subprocess.CalledProcessError as e:
     print(f"***Error in Clang Conversion***")
 
-try:
-    # result = subprocess.run([f"./{exe_file_path}"], check=True, capture_output=True)
-    # print(f"Execution Successful: {exe_file_path}")
-    # print(f"Output: {result}")
-    subprocess.run([f"./{exe_file_path}"], check=True)
-    print(f"Execution Successful: {exe_file_path}")
-except subprocess.CalledProcessError as e:
-    print(f"***Error in Execution***")
+result = subprocess.run([f"./{exe_file_path}"])
+# print(result)
+if result.returncode == 0:
+    print(f"Execution Successful: {result.returncode}")
+else:
+    print(f"***Error in Execution: {result.returncode}***")
 
 end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
+
+# TODO: script to run million times, collect analysis data, introduce random corruptions
+# TODO: run other c files

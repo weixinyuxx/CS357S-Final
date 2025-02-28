@@ -2,7 +2,7 @@
 
 (require rosette/lib/synthax)
 
-(define BV_SIZE 64)
+(define BV_SIZE 32)
 
 ; the bitvector type
 (define int? (bitvector BV_SIZE))
@@ -11,24 +11,24 @@
 
 ; specification
 ; note: the translation for llvm ne should be (not (bveq reg1 reg2))
-(define (check impl %tmp_alter1 %reg2)
-  (define result (impl %tmp_alter1 %reg2))
-  (assert (bveq result (bvxor %reg2 %reg2)))) 
+(define (check impl %48 %49)
+  (define result (impl %48 %49))
+  (assert (bveq result (bvxor %48 %49)))) 
 
 
 ; construct the grammar template
 ; note: there are no unary operations in llvm, so we do not model them here
-(define-grammar (binop_int %tmp_alter1 %reg2)
+(define-grammar (binop_int %48 %49)
   [expr
-    (choose %tmp_alter1 %reg2 (?? int?)
+    (choose %48 %49 (?? int?)
         ((bop) (expr) (expr)))]
   [bop
-    (choose bveq bvlshr bvsub bvmul bvadd bvshl bvor bvand bvashr)])
+    (choose bvadd bvashr bvsub bvand bvor bvlshr bvshl bveq bvmul)])
   
 
 ; expand the grammar template with depth
-(define (alter_op %tmp_alter1 %reg2)
-  (binop_int %tmp_alter1 %reg2 #:depth 2))
+(define (alter_op %48 %49)
+  (binop_int %48 %49 #:depth 2))
 
 ; synthesize
 (define-symbolic l r int?)

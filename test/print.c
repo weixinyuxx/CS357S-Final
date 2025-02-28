@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdint.h>
 
-void print32(u_int32_t n) {
-    printf("The %d th instruction aborted\n", n);
+void print32(uint32_t n) {
+    printf("%d\n", n);
 }
-void print64(u_int64_t n) {
-    printf("The %llu th instruction aborted\n", n);
+void print64(uint64_t n) {
+    printf("%d\n", n);
 }

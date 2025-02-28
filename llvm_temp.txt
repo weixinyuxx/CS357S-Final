@@ -1,2 +1,2 @@
-i64
-%dest23 = (bvxor %reg2 %reg2)
+i32
+%dest7 = (bvxor %48 %49)
