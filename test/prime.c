@@ -28,9 +28,7 @@ void primeFactorization(int n) {
 
 // Driver Code
 int main() {
-    int num;
-    printf("Enter a number: ");
-    scanf("%d", &num);
+    int num = 7047;
     
     if (num <= 1) {
         printf("Enter a number greater than 1.\n");

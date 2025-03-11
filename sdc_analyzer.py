@@ -8,23 +8,33 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 ERR_PROB = 0.001
-NUM_RUNS = 10000
+NUM_RUNS = 100000
 INTRODUCE_ERRORS = True
+USE_SYNTHESIS = True
 
 # Directory and file paths
-file_name = 'test_all'
+file_name = 'pow2'
 test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
 llvm_file_path = os.path.join(temp_dir_path, f"{file_name}.ll")
-llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
-exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
+if USE_SYNTHESIS:
+    llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
+    exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
+else:
+    llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_dup.ll")
+    exe_file_path = os.path.join(temp_dir_path, f"{file_name}_dup_exe")
+
 
 start_str = "call void @sdc_check_"
 error_idx_list = []
+inst_types = ['i1', 'i32', 'i64']
 
 start_time_total = time.time()
-print(f"*** SDC Analysis: {file_name} ***")
+if USE_SYNTHESIS:
+    print(f"*** SDC Analysis: {file_name} - SYNTHESIS***")
+else:
+    print(f"*** SDC Analysis: {file_name} - DUPLICATION***")
 
 with open(llvm_mod_file_path, "r") as llvm_mod_file:
     line_idx = 0
@@ -35,10 +45,21 @@ with open(llvm_mod_file_path, "r") as llvm_mod_file:
         # print(line)
         if line.startswith(start_str):
             line_words = line.split()
+            inst_type = ""
+            for word in line_words:
+                if word in inst_types:
+                    inst_type = word
             # TODO: Does not work if the value was already -1
-            line_words[3] = '-1,' if line_words[3].startswith('%') else (str(int(line_words[3]) + 1)+',')
-            line_replace = ' '.join(line_words)
-            llvm_mod_err_code = llvm_mod_code.replace(line, line_replace)
+            if line_words[3].startswith('%'): # register
+                error_line = f'%sdc_reg = add {inst_type} {line_words[3]} 1'
+                line_words[3] = '%sdc_reg,'
+                line_replace = ' '.join(line_words)
+                line_replace = error_line + '\n' + line_replace 
+                llvm_mod_err_code = llvm_mod_code.replace(line, line_replace)
+            else: # constant
+                line_words[3] = str(int(line_words[3]) + 1)+','
+                line_replace = ' '.join(line_words)
+                llvm_mod_err_code = llvm_mod_code.replace(line, line_replace)
 
             # Create new llvm file with modified error llvm code
             llvm_mod_err_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_err_{line_idx}.ll")
@@ -81,10 +102,10 @@ for run_num in progress:
     else:
         # print(f"***Error in Execution: {result.returncode}***")
         found_error_count += 1
-        if result.returncode in found_errors:
-            found_errors[result.returncode] += 1
+        if str(result.returncode) in found_errors:
+            found_errors[str(result.returncode)] += 1
         else:
-            found_errors[result.returncode] = 1
+            found_errors[str(result.returncode)] = 1
 
 print(f"Error Distribution: {str(found_errors)}")
 print(f"Found Error Count: {found_error_count}")
@@ -92,10 +113,18 @@ print(f"True Error Count: {true_error_count}")
 plt.figure(figsize=(8, 5))
 plt.bar(found_errors.keys(), found_errors.values(), color="blue")
 
-plt.xlabel("Line index")
+plt.xlabel("Instruction Num")
 plt.ylabel("Error Count")
 plt.title("Distribution of Errors")
 
-plt.show()
 end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
+plt.show()
+
+
+
+# TODO: integrate with LLFI
+# TODO: have control with only duplication / rename files
+# TODO: get it working on fancier algorithm than toy
+
+# TODO: make diagram look better
