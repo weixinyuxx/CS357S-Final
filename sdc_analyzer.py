@@ -80,6 +80,7 @@ with open(llvm_mod_file_path, "r") as llvm_mod_file:
 
 # Run executables for analysis
 found_errors = dict()
+true_errors = dict()
 found_error_count = 0
 true_error_count = 0
 total_error_prob = 1 - (1 - ERR_PROB) ** len(error_idx_list)
@@ -96,7 +97,12 @@ for run_num in progress:
     # If INTRODUCE_ERRORS set to True, then introduce artificial errors with probability ERR_PROB
     if INTRODUCE_ERRORS and (rand.random() < total_error_prob): # error occurs
         true_error_count += 1
-        curr_exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe_err_{rand.choice(error_idx_list)}")
+        err_inst_choice = rand.choice(error_idx_list)
+        if str(err_inst_choice) in true_errors:
+            true_errors[str(err_inst_choice)] += 1
+        else:
+            true_errors[str(err_inst_choice)] = 1
+        curr_exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe_err_{err_inst_choice}")
     
     result = subprocess.run([f"./{curr_exe_file_path}"], capture_output=True)
     # print(result)
@@ -110,18 +116,20 @@ for run_num in progress:
     else:
         # print(f"***Error in Execution: {result.returncode}***")
         found_error_count += 1
-        if str(result.returncode) in found_errors:
-            found_errors[str(result.returncode)] += 1
+        found_error_line = str(error_idx_list[result.returncode - 1])
+        if found_error_line in found_errors:
+            found_errors[found_error_line] += 1
         else:
-            found_errors[str(result.returncode)] = 1
+            found_errors[found_error_line] = 1
 
 print(f"Error Distribution: {str(found_errors)}")
+print(f"True Error Distribution: {str(true_errors)}")
 print(f"Found Error Count: {found_error_count}")
 print(f"True Error Count: {true_error_count}")
 plt.figure(figsize=(8, 5))
 plt.bar(found_errors.keys(), found_errors.values(), color="blue")
 
-plt.xlabel("Instruction Num")
+plt.xlabel("Instruction Line Num")
 plt.ylabel("Error Count")
 plt.title("Distribution of Errors")
 
