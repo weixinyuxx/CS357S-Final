@@ -42,7 +42,7 @@ inst_list = []
 alt_llvm_map = dict()
 
 # Directory and file paths
-file_name = 'test_all'
+file_name = 'pow2'
 test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
