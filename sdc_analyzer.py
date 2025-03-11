@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 ERR_PROB = 0.001
-NUM_RUNS = 100000
+NUM_RUNS = 10000
 INTRODUCE_ERRORS = True
 USE_SYNTHESIS = True
 
 # Directory and file paths
-file_name = 'pow2'
+file_name = 'prime'
 test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
@@ -49,6 +49,7 @@ with open(llvm_mod_file_path, "r") as llvm_mod_file:
             for word in line_words:
                 if word in inst_types:
                     inst_type = word
+                    break
             # TODO: Does not work if the value was already -1
             if line_words[3].startswith('%'): # register
                 error_line = f'%sdc_reg = add {inst_type} {line_words[3]} 1'
@@ -84,6 +85,9 @@ true_error_count = 0
 total_error_prob = 1 - (1 - ERR_PROB) ** len(error_idx_list)
 print("Total Error Prob:", total_error_prob)
 
+
+data = []
+
 progress = tqdm(range(NUM_RUNS))
 for run_num in progress:
     progress.set_postfix({"Errors found":found_error_count, "Total Errors": true_error_count})
@@ -96,6 +100,10 @@ for run_num in progress:
     
     result = subprocess.run([f"./{curr_exe_file_path}"], capture_output=True)
     # print(result)
+    # if curr_exe_file_path != exe_file_path and result.returncode == 0:
+    #     data += [curr_exe_file_path]
+    if curr_exe_file_path == exe_file_path and result.returncode != 0:
+        data += ["true error detected!"]
     if result.returncode == 0:
         # print(f"Execution Successful: {result.returncode}")
         pass
@@ -122,6 +130,7 @@ print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
 plt.show()
 
 
+print(data)
 
 # TODO: integrate with LLFI
 # TODO: have control with only duplication / rename files
