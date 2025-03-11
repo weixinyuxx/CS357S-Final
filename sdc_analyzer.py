@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 ERR_PROB = 0.001
-NUM_RUNS = 10000
+NUM_RUNS = 100000
 INTRODUCE_ERRORS = True
+USE_SYNTHESIS = True
 
 # Directory and file paths
 file_name = 'test_all'
@@ -17,14 +18,22 @@ test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
 llvm_file_path = os.path.join(temp_dir_path, f"{file_name}.ll")
-llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
-exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
+if USE_SYNTHESIS:
+    llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
+    exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
+else:
+    llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_dup.ll")
+    exe_file_path = os.path.join(temp_dir_path, f"{file_name}_dup_exe")
+
 
 start_str = "call void @sdc_check_"
 error_idx_list = []
 
 start_time_total = time.time()
-print(f"*** SDC Analysis: {file_name} ***")
+if USE_SYNTHESIS:
+    print(f"*** SDC Analysis: {file_name} - SYNTHESIS***")
+else:
+    print(f"*** SDC Analysis: {file_name} - DUPLICATION***")
 
 with open(llvm_mod_file_path, "r") as llvm_mod_file:
     line_idx = 0
@@ -99,3 +108,10 @@ plt.title("Distribution of Errors")
 plt.show()
 end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
+
+
+# TODO: integrate with LLFI
+# TODO: have control with only duplication / rename files
+# TODO: get it working on fancier algorithm than toy
+
+# TODO: make diagram look better

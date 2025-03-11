@@ -7,6 +7,8 @@ import os
 from racket2racket import r2r
 from rkt2llvm import rkt2llvm, DestReg
 
+USE_SYNTHESIS = True
+
 start_time_total = time.time()
 # Initialize the LLVM bindings
 llvm.initialize()
@@ -45,9 +47,12 @@ test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
 llvm_file_path = os.path.join(temp_dir_path, f"{file_name}.ll")
-llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
-exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
-
+if USE_SYNTHESIS:
+    llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
+    exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
+else:
+    llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_dup.ll")
+    exe_file_path = os.path.join(temp_dir_path, f"{file_name}_dup_exe")
 # Reset temp folder
 if os.path.exists(temp_dir_path):
     shutil.rmtree(temp_dir_path)
@@ -169,9 +174,11 @@ for inst in inst_list:
     # Call instance of racket script for each instruction
     print('Running Racket script...')
     sys.stdout.flush()
-    # result = subprocess.run(['racket', 'binop_base.rkt'], capture_output=True, text=True)
-    print(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
-    alt_rkt_code = r2r(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
+    alt_rkt_code = None
+    if USE_SYNTHESIS:
+        # result = subprocess.run(['racket', 'binop_base.rkt'], capture_output=True, text=True)
+        print(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
+        alt_rkt_code = r2r(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
     # print(alt_rkt_code)
     if not alt_rkt_code:
         print("No alternative found")
