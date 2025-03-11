@@ -40,7 +40,7 @@ inst_list = []
 alt_llvm_map = dict()
 
 # Directory and file paths
-file_name = 'test_all'
+file_name = 'alexnet'
 test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
@@ -49,9 +49,9 @@ llvm_mod_file_path = os.path.join(temp_dir_path, f"{file_name}_mod.ll")
 exe_file_path = os.path.join(temp_dir_path, f"{file_name}_mod_exe")
 
 # Reset temp folder
-if os.path.exists(temp_dir_path):
-    shutil.rmtree(temp_dir_path)
-os.makedirs(temp_dir_path)
+# if os.path.exists(temp_dir_path):
+#     shutil.rmtree(temp_dir_path)
+# os.makedirs(temp_dir_path)
 
 # Convert c file to llvm file
 try:
@@ -98,10 +98,14 @@ for function in parsed_module.functions:
 # TODO: fix icmp
 sys.stdout.flush()
 
+generated = 0
+not_generated = 0
+
+
 alt_dest_reg = 0
 llvm_mod_code = llvm_ir_code
 dest_reg = DestReg()
-inst_types = ['i32', 'i64']
+inst_types = ['i32', 'i64', 'i1']
 count = 0
 print("Valid Instructions:")
 for inst in inst_list:
@@ -195,6 +199,7 @@ for inst in inst_list:
     alt_llvm_code = ""
     if alt_rkt_code == "":
         alt_llvm_code = leading_spaces + inst_str.replace(old_res_reg, res_reg).strip()
+        not_generated += 1
     else:
         print("alt_rkt_code:", alt_rkt_code)
         print("type:", str(inst.type))
@@ -206,6 +211,7 @@ for inst in inst_list:
             for alt_line in alt_llvm_code_list:
                 alt_llvm_code += leading_spaces + alt_line + "\n"
             alt_llvm_code = alt_llvm_code.rstrip()
+        generated += 1
 
     print("Alternate LLVM:", alt_llvm_code)
 
@@ -226,7 +232,7 @@ print(alt_llvm_map)
 
 # TODO: script to run and test alternate file
 
-sdc_check_code = '''
+sdc_check_code = """
 
 define void @sdc_check_i32(i32 %reg1, i32 %reg2, i32 %counter) {
 entry:
@@ -254,8 +260,23 @@ done:
     ret void
 }
 
-declare void @exit(i32)
-'''
+define void @sdc_check_i1(i1 %reg1, i1 %reg2, i32 %counter) {
+entry:
+    %cmp = icmp ne i1 %reg1, %reg2
+    br i1 %cmp, label %abort, label %done
+
+abort:
+    call void @exit(i32 %counter)
+    br label %done
+
+done:
+    ret void
+}
+
+"""
+# declare void @exit(i32)
+
+# """
 llvm_mod_code += sdc_check_code
 
 # Create new llvm file with modified llvm code
@@ -278,6 +299,6 @@ else:
 
 end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
-
+print(f"Alternative generated: {generated}")
 # TODO: script to run million times, collect analysis data, introduce random corruptions
 # TODO: run other c files
