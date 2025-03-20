@@ -12,7 +12,7 @@ def rkt2llvm(rkt_str, type, dest_reg):
     return inst, dest
 
 opcode_mapping = {"bvadd":"add", "bvsub":"sub", "bvmul":"mul", "bvshl":"shl", "bvlshr":"lshr", "bvashr":"ashr",
-                  "bvand":"and", "bvor":"or", "bvxor":"xor"}
+                "bvand":"and", "bvor":"or", "bvxor":"xor"}
 
 def find_whitespace(rkt_str, start):
     """Returens the index of the first whitespace (' ' or '\n')"""
@@ -61,14 +61,3 @@ def rkt2llvm_helper(rkt_str, iterator, type, dest_reg):
             + [f"{dest} = {opcode_mapping[opcode]} {type} {first_dest}, {second_dest}"]
         )
     return inst, dest, iterator
-
-# rkt = "(bvshl %reg2 (bvlshr (bv #x0000000000010000 64) (bv #x0000000000000010 64)))"
-
-# rkt = """(bvxor 
-#    (bvand (bv #x4000000000000000 64) (bv #x0000000000000009 64))
-#    (bvmul (bv #x0000000000000002 64) %reg2))"""
-# print(
-#     rkt2llvm(
-#         rkt, "i64", DestReg()
-#     )
-# )

@@ -68,6 +68,3 @@ def r2r(expr, type, exclude, reg1, reg2, tmp_path="tmp.rkt"):
     if result.find("%tmp_alter2") != -1:
         return None
     return result
-
-# print(r2r("(bvadd %reg2 %reg2)", "i64", ["bvadd"], "%reg1", "%reg2"))
-# print(r2r("(bvshl %10 (int 1))", "i32", ["bvshl"], "%10", "(int 1)"))
