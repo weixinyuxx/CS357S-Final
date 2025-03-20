@@ -150,7 +150,6 @@ for inst in inst_list:
     except ValueError:
         pass
     
-    # TODO: replace with DestReg alt_reg call
     # Replace dest reg with alt dest reg
     alt_dest_reg_str = f"%dest{alt_dest_reg}"
     while alt_dest_reg_str in llvm_ir_code:
@@ -237,7 +236,6 @@ for inst in inst_list:
 
 print(alt_llvm_map)
 
-# TODO: script to run and test alternate file
 
 sdc_check_code = """
 
@@ -307,5 +305,3 @@ else:
 end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
 print(f"Alternative generated: {generated}")
-# TODO: script to run million times, collect analysis data, introduce random corruptions
-# TODO: run other c files
