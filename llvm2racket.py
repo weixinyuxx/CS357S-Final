@@ -2,7 +2,6 @@ import llvmlite.binding as llvm
 import subprocess
 import sys
 import time
-import shutil
 import os
 from racket2racket import r2r
 from rkt2llvm import rkt2llvm, DestReg
@@ -42,7 +41,7 @@ inst_list = []
 alt_llvm_map = dict()
 
 # Directory and file paths
-file_name = 'alexnet'
+file_name = 'pow2'
 test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
@@ -73,9 +72,6 @@ parsed_module = parse_llvm_ir(llvm_ir_code)
 print("-----------------------")
 for function in parsed_module.functions:
     print(f"Function name: {function.name}")
-    # print(f"Function arguments: {function.args}")
-    # print(f"Function return type: {function.return_type}")
-    # print(f"Function instructions: {function.instructions}")
 
     print("blocks:")
     for blk in function.blocks:
@@ -85,9 +81,6 @@ for function in parsed_module.functions:
             print("Opcode:", inst.opcode)
             if inst.opcode in valid_opcodes:
                 inst_list.append(inst)
-            # operands = inst.operands
-            # for oper in operands:
-            #     print("Operand:", oper)
         print()
     
     print("Type:", function.type)
@@ -100,7 +93,6 @@ for function in parsed_module.functions:
     for att in function.attributes:
         print(att)
 
-# TODO: fix icmp
 sys.stdout.flush()
 
 generated = 0
@@ -116,15 +108,11 @@ print("Valid Instructions:")
 for inst in inst_list:
     count += 1
     start_time_inst = time.time()
-    # print(inst)
-    # print('Racket:')
     inst_str = str(inst)
     res_reg = inst_str.split()[0] # result register
     old_res_reg = res_reg
     opcode = inst.opcode
     operands = inst.operands
-    # for op in operands:
-    #     print("op:", op)
     operands = inst.operands
     op1_list = str(operands.next()).split()
     op1 = op1_list[0]
@@ -159,8 +147,6 @@ for inst in inst_list:
     alt_dest_reg += 1
 
     # Build racket instruction from llvm
-    # print("op1:", op1)
-    # print("op2:", op2)
     rkt_inst = f"({valid_opcodes[opcode]} {op1} {op2})"
     if inst.opcode == 'icmp ne':
         rkt_inst = f"(not ({rkt_inst}))"
@@ -179,19 +165,12 @@ for inst in inst_list:
     sys.stdout.flush()
     alt_rkt_code = None
     if USE_SYNTHESIS:
-        # result = subprocess.run(['racket', 'binop_base.rkt'], capture_output=True, text=True)
         print(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
         alt_rkt_code = r2r(rkt_inst_right, str(inst.type), [valid_opcodes[opcode]], op1, op2)
-    # print(alt_rkt_code)
     if not alt_rkt_code:
         print("No alternative found")
         alt_rkt_code = ""
     alt_rkt_code = alt_rkt_code.strip()
-
-    # # Read alternative racket code from temp file
-    # alt_rkt_temp_file_path = 'alt_rkt_temp.txt'
-    # with open(alt_rkt_temp_file_path, 'r') as alt_rkt_temp_file:
-    #     alt_rkt_code = alt_rkt_temp_file.read()
 
     # Convert alternate racket code to alterate llvm code
     line = inst_str
@@ -278,10 +257,10 @@ done:
     ret void
 }
 
-"""
-# declare void @exit(i32)
+declare void @exit(i32)
 
-# """
+"""
+
 llvm_mod_code += sdc_check_code
 
 # Create new llvm file with modified llvm code
@@ -296,7 +275,6 @@ except subprocess.CalledProcessError as e:
     print(f"***Error in Clang Conversion***")
 
 result = subprocess.run([f"./{exe_file_path}"])
-# print(result)
 if result.returncode == 0:
     print(f"Execution Successful: {result.returncode}")
 else:

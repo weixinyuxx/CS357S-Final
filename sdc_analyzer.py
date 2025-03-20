@@ -13,7 +13,7 @@ INTRODUCE_ERRORS = True
 USE_SYNTHESIS = True
 
 # Directory and file paths
-file_name = 'prime'
+file_name = 'pow2'
 test_dir_path = 'test'
 temp_dir_path = 'temp'
 c_file_path = os.path.join(test_dir_path, f"{file_name}.c")
@@ -50,7 +50,6 @@ with open(llvm_mod_file_path, "r") as llvm_mod_file:
                 if word in inst_types:
                     inst_type = word
                     break
-            # TODO: Does not work if the value was already -1
             if line_words[3].startswith('%'): # register
                 error_line = f'%sdc_reg = add {inst_type} {line_words[3]} 1'
                 line_words[3] = '%sdc_reg,'
