@@ -15,8 +15,8 @@
 
 ## Installation and Execution
 
-1. Install **Racket**.
-2. Install **Rosette**.
+1. Install **Racket** and **Rosette**.
+2. Install any other required dependencies.
 3. Clone the GitHub repository:  
    ```bash
    git clone https://github.com/weixinyuxx/CS357S-Final
@@ -59,3 +59,6 @@ python3 sdc_analyzer.py
 └── test.ll
 
 ```
+
+## Project Report
+The project report can be found at `Silent_Data_Corruption_Detection_with_Program_Synthesis.pdf`.
