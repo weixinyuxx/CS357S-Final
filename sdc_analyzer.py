@@ -137,11 +137,4 @@ end_time_total = time.time()
 print(f"Total Elapsed Time: {end_time_total - start_time_total} s")
 plt.show()
 
-
 print(data)
-
-# TODO: integrate with LLFI
-# TODO: have control with only duplication / rename files
-# TODO: get it working on fancier algorithm than toy
-
-# TODO: make diagram look better
